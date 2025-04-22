@@ -6,13 +6,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateName } from './utils/nameGenerator';
 
 const app = express();
+app.use(cors());
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    allowedHeaders: ["*"],
+    credentials: true
   },
-  maxHttpBufferSize: 10 * 1024 * 1024 * 1024 // 10GB
+  maxHttpBufferSize: 1e8, // Reduce to 100MB since we're using P2P for files
+  transports: ['websocket', 'polling']
 });
 
 interface Device {
@@ -48,22 +53,22 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('fileTransferRequest', ({ to, files, fileData }) => {
+  socket.on('fileTransferRequest', ({ to, files }) => {
     const targetDevice = connectedDevices.find(d => d.id === to);
     if (targetDevice) {
       io.to(targetDevice.socketId).emit('fileTransferRequest', {
-        from: device.id,
-        files,
-        fileData
+        from: socket.id,
+        files
       });
     }
   });
 
   socket.on('fileTransferStart', ({ to, fileName, fileType, fileData }) => {
+    console.log(`Starting file transfer to ${to}: ${fileName}`);
     const targetDevice = connectedDevices.find(d => d.id === to);
     if (targetDevice) {
       io.to(targetDevice.socketId).emit('fileTransferReceive', {
-        from: device.id,
+        from: socket.id,
         fileName,
         fileType,
         fileData
@@ -75,10 +80,22 @@ io.on('connection', (socket) => {
     const targetDevice = connectedDevices.find(d => d.id === to);
     if (targetDevice) {
       io.to(targetDevice.socketId).emit('fileTransferResponse', {
-        from: device.id,
+        from: socket.id,
         accepted
       });
     }
+  });
+
+  socket.on('rtc-offer', ({ to, offer }) => {
+    socket.to(to).emit('rtc-offer', { from: socket.id, offer });
+  });
+
+  socket.on('rtc-answer', ({ to, answer }) => {
+    socket.to(to).emit('rtc-answer', { from: socket.id, answer });
+  });
+
+  socket.on('rtc-ice-candidate', ({ to, candidate }) => {
+    socket.to(to).emit('rtc-ice-candidate', { from: socket.id, candidate });
   });
 });
 
