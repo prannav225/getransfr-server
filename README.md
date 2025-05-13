@@ -1,4 +1,3 @@
-
 # DropMate Server
 
 Backend server for DropMate file sharing application, handling real-time connections and file transfers.
@@ -10,6 +9,10 @@ Backend server for DropMate file sharing application, handling real-time connect
 - 📦 File transfer handling
 - 🔒 Local network security
 - 🚀 Fast data streaming
+- 🎯 WebRTC signaling support
+- 🔍 Automatic device discovery
+- 🏷️ Random device name generation
+- 🔌 Automatic connection management
 
 ## Tech Stack
 
@@ -17,6 +20,8 @@ Backend server for DropMate file sharing application, handling real-time connect
 - Express
 - Socket.IO
 - TypeScript
+- UUID
+- CORS
 
 ## Getting Started
 
@@ -34,7 +39,7 @@ npm install
 ### Development
 
 ```bash
-# Start development server
+# Start development server with hot reload
 npm run dev
 ```
 
@@ -68,6 +73,20 @@ HOST=localhost
 - `fileTransferRequest`: File transfer request
 - `fileTransferResponse`: Transfer acceptance/rejection
 - `fileTransferReceive`: File data transmission
+- `rtc-offer`: WebRTC offer signal
+- `rtc-answer`: WebRTC answer signal
+- `rtc-ice-candidate`: WebRTC ICE candidate exchange
+- `disconnect`: Handle device disconnection
+
+### Device Interface
+
+```typescript
+interface Device {
+  id: string;        // Unique device identifier
+  name: string;      // Generated device name
+  socketId: string;  // Socket connection ID
+}
+```
 
 ## Project Structure
 
@@ -77,7 +96,29 @@ src/
 ├── socket/         # Socket.IO event handlers
 ├── types/         # TypeScript definitions
 └── utils/         # Helper functions
+    └── nameGenerator.ts  # Random name generation utility
 ```
+
+## Configuration
+
+### Server Settings
+- Max HTTP Buffer Size: 100MB
+- Supported Transports: WebSocket, Polling
+- CORS: Enabled for all origins
+- Port: 3000 (default)
+
+### Name Generation
+- Implements random device name generation
+- Combines adjectives and nouns for unique names
+- Over 3000 possible unique combinations
+
+## Development Notes
+
+- Uses `ts-node-dev` for development with hot reload
+- Implements WebRTC signaling for P2P connections
+- Handles automatic cleanup of disconnected devices
+- Supports both WebSocket and HTTP polling
+- TypeScript configuration with strict mode enabled
 
 ## Contributing
 
