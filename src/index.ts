@@ -26,80 +26,116 @@ interface Device {
   socketId: string;
 }
 
-const connectedDevices: Device[] = [];
+const connectedDevices = new Map<string, Device>();
 
-// Remove the old generateDeviceName function as we're importing it
+// Broadcast updated device list to all clients
+function broadcastDeviceList() {
+  const deviceList = Array.from(connectedDevices.values());
+  io.emit('connectedDevices', deviceList);
+}
 
 io.on('connection', (socket) => {
-  const device: Device = {
-    id: uuidv4(),
-    name: generateName(),
-    socketId: socket.id
-  };
+  console.log('New connection:', socket.id);
+  const clientId = socket.handshake.query.clientId as string;
+  let device: Device;
 
-  connectedDevices.push(device);
-  
-  // Send the current device info to the newly connected client
+  if (clientId && connectedDevices.has(clientId)) {
+    device = connectedDevices.get(clientId)!;
+    device.socketId = socket.id;
+    console.log('Reconnected device:', device.name, device.id);
+  } else {
+    device = {
+      id: uuidv4(),
+      name: generateName(),
+      socketId: socket.id
+    };
+    console.log('New device created:', device.name, device.id);
+  }
+
+  // Always update the device in the map
+  connectedDevices.set(device.id, device);
+
+  // Send device info to the client
   socket.emit('deviceInfo', device);
-  
-  // Broadcast the updated list of connected devices to all clients
-  io.emit('connectedDevices', connectedDevices);
 
+  // Broadcast device list to all clients
+  broadcastDeviceList();
+
+  // Handle device reconnection
+  socket.on('deviceReconnect', (deviceId) => {
+    if (deviceId && connectedDevices.has(deviceId)) {
+      const existingDevice = connectedDevices.get(deviceId)!;
+
+      // If we're switching from a temporary device to an existing one,
+      // remove the temporary device
+      if (device.id !== existingDevice.id) {
+        connectedDevices.delete(device.id);
+        io.emit('deviceDisconnected', device.id);
+      }
+      existingDevice.socketId = socket.id;
+      device = existingDevice;
+      connectedDevices.set(deviceId, existingDevice);
+      socket.emit('deviceInfo', existingDevice);
+      broadcastDeviceList();
+    }
+  });
+
+  // Handle device announcement
+  socket.on('deviceAnnounce', () => {
+    connectedDevices.set(device.id, device);
+    socket.emit('deviceInfo', device);
+    broadcastDeviceList();
+  });
+
+  // Handle device list request
+  socket.on('requestDevices', () => {
+    socket.emit('deviceInfo', device);
+    const deviceList = Array.from(connectedDevices.values())
+      .filter(d => d.id !== device.id);
+    socket.emit('connectedDevices', deviceList);
+  });
+
+  // Handle device disconnection
   socket.on('disconnect', () => {
-    const index = connectedDevices.findIndex(d => d.socketId === socket.id);
-    if (index !== -1) {
-      connectedDevices.splice(index, 1);
-      io.emit('connectedDevices', connectedDevices);
+    console.log('Device disconnected:', device?.name, device?.id);
+    // Don't immediately remove the device, give it a chance to reconnect
+    setTimeout(() => {
+      const currentDevice = connectedDevices.get(device.id);
+      if (currentDevice && currentDevice.socketId === socket.id) {
+        connectedDevices.delete(device.id);
+        broadcastDeviceList();
+        io.emit('deviceDisconnected', device.id);
+      }
+    }, 5000); // 5 second grace period for reconnection
+  });
+
+  // Handle explicit device disconnection
+  socket.on('deviceDisconnecting', (deviceId) => {
+    if (deviceId && connectedDevices.has(deviceId)) {
+      connectedDevices.delete(deviceId);
+      broadcastDeviceList();
+      io.emit('deviceDisconnected', deviceId);
     }
   });
 
-  socket.on('fileTransferRequest', ({ to, files }) => {
-    const targetDevice = connectedDevices.find(d => d.id === to);
-    if (targetDevice) {
-      io.to(targetDevice.socketId).emit('fileTransferRequest', {
-        from: socket.id,
-        files
-      });
-    }
-  });
-
-  socket.on('fileTransferStart', ({ to, fileName, fileType, fileData }) => {
-    console.log(`Starting file transfer to ${to}: ${fileName}`);
-    const targetDevice = connectedDevices.find(d => d.id === to);
-    if (targetDevice) {
-      io.to(targetDevice.socketId).emit('fileTransferReceive', {
-        from: socket.id,
-        fileName,
-        fileType,
-        fileData
-      });
-    }
-  });
-
-  socket.on('fileTransferResponse', ({ to, accepted }) => {
-    const targetDevice = connectedDevices.find(d => d.id === to);
-    if (targetDevice) {
-      io.to(targetDevice.socketId).emit('fileTransferResponse', {
-        from: socket.id,
-        accepted
-      });
-    }
-  });
-
+  // Signaling events
   socket.on('rtc-offer', ({ to, offer }) => {
+    console.log(`Relaying rtc-offer from ${socket.id} to ${to}`);
     socket.to(to).emit('rtc-offer', { from: socket.id, offer });
   });
 
   socket.on('rtc-answer', ({ to, answer }) => {
+    console.log(`Relaying rtc-answer from ${socket.id} to ${to}`);
     socket.to(to).emit('rtc-answer', { from: socket.id, answer });
   });
 
   socket.on('rtc-ice-candidate', ({ to, candidate }) => {
+    // console.log(`Relaying rtc-ice-candidate from ${socket.id} to ${to}`);
     socket.to(to).emit('rtc-ice-candidate', { from: socket.id, candidate });
   });
 });
 
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
+const PORT = process.env.PORT || 5000;
+httpServer.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

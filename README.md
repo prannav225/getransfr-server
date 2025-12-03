@@ -58,7 +58,7 @@ npm start
 Create a `.env` file in the server directory:
 
 ```env
-PORT=3000
+PORT=5000
 HOST=localhost
 ```
 
@@ -105,12 +105,12 @@ src/
 - Max HTTP Buffer Size: 100MB
 - Supported Transports: WebSocket, Polling
 - CORS: Enabled for all origins
-- Port: 3000 (default)
+- Port: 5000 (default)
 
 ### Name Generation
 - Implements random device name generation
 - Combines adjectives and nouns for unique names
-- Over 3000 possible unique combinations
+- Over 5000 possible unique combinations
 
 ## Development Notes
 
