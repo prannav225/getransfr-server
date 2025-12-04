@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev src/index.ts",
     "build": "tsc",
-    "prestart": "npm run build",              
-    "start": "npm start"
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
