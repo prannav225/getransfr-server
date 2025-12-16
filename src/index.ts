@@ -90,8 +90,8 @@ io.on('connection', (socket) => {
   // Handle device list request
   socket.on('requestDevices', () => {
     socket.emit('deviceInfo', device);
-    const deviceList = Array.from(connectedDevices.values())
-      .filter(d => d.id !== device.id);
+    // Send the full list of connected devices
+    const deviceList = Array.from(connectedDevices.values());
     socket.emit('connectedDevices', deviceList);
   });
 
