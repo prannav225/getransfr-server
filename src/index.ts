@@ -109,7 +109,7 @@ io.on('connection', (socket) => {
     }, 5000); // 5 second grace period for reconnection
   });
 
-  // Handle explicit device disconnection
+  // Handle explicit device disconnection     
   socket.on('deviceDisconnecting', (deviceId) => {
     if (deviceId && connectedDevices.has(deviceId)) {
       connectedDevices.delete(deviceId);
@@ -135,7 +135,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 httpServer.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
