@@ -133,6 +133,12 @@ io.on('connection', (socket) => {
     // console.log(`Relaying rtc-ice-candidate from ${socket.id} to ${to}`);
     socket.to(to).emit('rtc-ice-candidate', { from: socket.id, candidate });
   });
+
+  // Clipboard sharing event
+  socket.on('clipboard-share', ({ to, text }) => {
+    console.log(`Relaying clipboard-share from ${socket.id} to ${to}`);
+    socket.to(to).emit('clipboard-receive', { from: socket.id, text });
+  });
 });
 
 const PORT = process.env.PORT || 5001;
