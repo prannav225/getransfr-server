@@ -1,38 +1,54 @@
 # Getransfr Server
 
-The backend for the Getransfr file sharing app, providing real‑time device synchronization and secure file transfers over WebSocket and WebRTC.
+The Getransfr Server is a Node.js signaling hub that facilitates device discovery and connection handshakes for the Getransfr platform. It acts as a lightweight coordination layer between peer-to-peer clients.
 
-## Features
+## core responsibilities
 
-- 🔄 Real‑time device sync
-- 📡 WebSocket communication
-- 📦 Efficient file transfer handling
-- 🔒 Local network security
-- 🚀 High‑speed data streaming
-- 🎯 WebRTC signaling for P2P connections
-- 🔍 Automatic device discovery
-- 🏷️ Random device name generation
-- 🔌 Automatic connection management
+- Discovery: Manages and broadcasts active device lists to all nodes on the same local network.
+- WebRTC Signaling: Relays connection metadata (offers, answers, and ICE candidates) to enable direct peer-to-peer data transport.
+- Lifecycle Management: Tracks device connectivity and ensures network lists are updated immediately upon joins or disconnects.
+- Friendly Naming: Assigns unique identifiers and generates human-readable random names for connected devices.
 
-## Tech Stack
+## technical documentation
 
-- Node.js
-- Express
-- Socket.IO
-- TypeScript
-- UUID
-- CORS
+### websocket event API
 
+The server handles several key event types to maintain system state:
 
-### WebSocket Events
+#### client to server
+- deviceInfo: Reports client metadata (avatar, device type, name) to the discovery pool.
+- fileTransferRequest: Initiates a transfer handshake with a target peer.
+- fileTransferResponse: Relays the acceptance or rejection of a file transfer request.
+- rtc-offer / rtc-answer / rtc-ice-candidate: Standard WebRTC signaling vectors.
 
-- `connection` – new device connected
-- `deviceInfo` – exchange device info
-- `connectedDevices` – list of devices
-- `fileTransferStart` – start a transfer
-- `fileTransferRequest` – request a transfer
-- `fileTransferResponse` – accept/reject
-- `fileTransferReceive` – receive file data
-- `rtc-offer` / `rtc-answer` – WebRTC signaling
-- `rtc-ice-candidate` – ICE candidate exchange
-- `disconnect` – device disconnected
+#### server to client
+- connectedDevices: Provides a comprehensive list of all active peers on the network.
+- fileTransferStart: Signals the recipient that a file stream is beginning.
+
+## deployment
+
+### local development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Launch development server:
+   ```bash
+   npm run dev
+   ```
+
+### production
+
+To build and serve the application for production:
+```bash
+npm run build
+npm start
+```
+
+The server defaults to port 3001 unless otherwise specified in the environment variables.
+
+## security architecture
+
+This server is strictly a signaling agent. It does not process, store, or have access to the contents of the files being transferred. All file data is encrypted and transferred directly between peers via WebRTC, ensuring a private and secure user experience.

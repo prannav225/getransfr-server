@@ -121,23 +121,23 @@ io.on('connection', (socket) => {
   // Signaling events
   socket.on('rtc-offer', ({ to, offer }) => {
     console.log(`Relaying rtc-offer from ${socket.id} to ${to}`);
-    socket.to(to).emit('rtc-offer', { from: socket.id, offer });
+    io.to(to).emit('rtc-offer', { from: socket.id, offer });
   });
 
   socket.on('rtc-answer', ({ to, answer }) => {
     console.log(`Relaying rtc-answer from ${socket.id} to ${to}`);
-    socket.to(to).emit('rtc-answer', { from: socket.id, answer });
+    io.to(to).emit('rtc-answer', { from: socket.id, answer });
   });
 
   socket.on('rtc-ice-candidate', ({ to, candidate }) => {
     // console.log(`Relaying rtc-ice-candidate from ${socket.id} to ${to}`);
-    socket.to(to).emit('rtc-ice-candidate', { from: socket.id, candidate });
+    io.to(to).emit('rtc-ice-candidate', { from: socket.id, candidate });
   });
 
   // Clipboard sharing event
   socket.on('clipboard-share', ({ to, text }) => {
     console.log(`Relaying clipboard-share from ${socket.id} to ${to}`);
-    socket.to(to).emit('clipboard-receive', { from: socket.id, text });
+    io.to(to).emit('clipboard-receive', { from: socket.id, text });
   });
 });
 
