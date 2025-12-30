@@ -48,14 +48,14 @@ io.on('connection', (socket) => {
   let device: Device;
 
   // Check if we have this client already
-  if (clientId && connectedDevices.has(clientId)) {
+  if (clientId && clientId !== 'undefined' && connectedDevices.has(clientId)) {
     device = connectedDevices.get(clientId)!;
     device.socketId = socket.id;
     device.ip = ip;
     console.log('Reconnected device:', device.name, device.id);
   } else {
     device = {
-      id: clientId || uuidv4(),
+      id: (clientId && clientId !== 'undefined') ? clientId : uuidv4(),
       name: generateName(),
       socketId: socket.id,
       ip: ip
