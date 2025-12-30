@@ -24,6 +24,7 @@ interface Device {
   id: string;
   name: string;
   socketId: string;
+  ip?: string;
 }
 
 const connectedDevices = new Map<string, Device>();
@@ -35,19 +36,24 @@ function broadcastDeviceList() {
 }
 
 io.on('connection', (socket) => {
-  console.log('New connection:', socket.id);
+  const ip = socket.handshake.address.replace('::ffff:', '');
+  console.log('New connection:', socket.id, 'from IP:', ip);
+  
   const clientId = socket.handshake.query.clientId as string;
   let device: Device;
 
+  // Check if we have this client already
   if (clientId && connectedDevices.has(clientId)) {
     device = connectedDevices.get(clientId)!;
     device.socketId = socket.id;
+    device.ip = ip;
     console.log('Reconnected device:', device.name, device.id);
   } else {
     device = {
-      id: uuidv4(),
+      id: clientId || uuidv4(),
       name: generateName(),
-      socketId: socket.id
+      socketId: socket.id,
+      ip: ip
     };
     console.log('New device created:', device.name, device.id);
   }
@@ -55,10 +61,10 @@ io.on('connection', (socket) => {
   // Always update the device in the map
   connectedDevices.set(device.id, device);
 
-  // Send device info to the client
+  // Send device info to the client immediately
   socket.emit('deviceInfo', device);
 
-  // Broadcast device list to all clients
+  // Broadcast updated device list to everyone
   broadcastDeviceList();
 
   // Handle device reconnection
