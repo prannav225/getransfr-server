@@ -168,3 +168,5 @@ httpServer.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`[Getransfr] Server ready on :${PORT}`);
   console.log(`[Getransfr] Max Relay Buffer: 10MB`);
 });
+
+// Force restart trigger
