@@ -1,54 +1,33 @@
 # Getransfr Server
 
-The Getransfr Server is a Node.js signaling hub that facilitates device discovery and connection handshakes for the Getransfr platform. It acts as a lightweight coordination layer between peer-to-peer clients.
+The Getransfr Server is a high-performance Node.js signaling hub that facilitates device discovery and connection handshakes for the Getransfr platform. It acts as a lightweight coordination layer between peer-to-peer clients.
 
-## core responsibilities
+## Core Responsibilities
 
-- Discovery: Manages and broadcasts active device lists to all nodes on the same local network.
-- WebRTC Signaling: Relays connection metadata (offers, answers, and ICE candidates) to enable direct peer-to-peer data transport.
-- Lifecycle Management: Tracks device connectivity and ensures network lists are updated immediately upon joins or disconnects.
-- Friendly Naming: Assigns unique identifiers and generates human-readable random names for connected devices.
+- **Discovery**: Manages and broadcasts active device lists to all nodes on the same local network, enabling instant peer detection.
+- **WebRTC Signaling**: Relays crucial connection metadata, including SDP offers, answers, and ICE candidates, to establish direct peer-to-peer data channels.
+- **Lifecycle Management**: Real-time tracking of device connectivity with automatic list updates and a grace period for transient disconnections.
+- **Identification and Naming**: Assigns unique persistent identifiers and generates human-readable random names for all connected devices.
 
-## technical documentation
+## Technical Architecture
 
-### websocket event API
+### WebSocket Event Protocol
 
-The server handles several key event types to maintain system state:
+The server utilizes Socket.io to manage a suite of events that maintain system state:
 
-#### client to server
-- deviceInfo: Reports client metadata (avatar, device type, name) to the discovery pool.
-- fileTransferRequest: Initiates a transfer handshake with a target peer.
-- fileTransferResponse: Relays the acceptance or rejection of a file transfer request.
-- rtc-offer / rtc-answer / rtc-ice-candidate: Standard WebRTC signaling vectors.
+#### Client to Server
+- **deviceAnnounce**: Registers a new device in the discovery pool.
+- **deviceReconnect**: Re-links an existing device session using its persistent ID.
+- **requestDevices**: Requests a fresh list of all currently connected peers.
+- **rtc-offer / rtc-answer / rtc-ice-candidate**: Encapsulated signaling data for WebRTC handshakes.
+- **clipboard-share**: Relays text data for cross-device clipboard synchronization.
 
-#### server to client
-- connectedDevices: Provides a comprehensive list of all active peers on the network.
-- fileTransferStart: Signals the recipient that a file stream is beginning.
+#### Server to Client
+- **deviceInfo**: Sends assigned identification and profile data back to the client.
+- **connectedDevices**: Provides an array of all active peers on the local network.
+- **rtc-offer / rtc-answer / rtc-ice-candidate**: Relayed signaling data from a remote peer.
+- **clipboard-receive**: Distributes shared text to the intended recipient.
 
-## deployment
+## Security Architecture
 
-### local development
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Launch development server:
-   ```bash
-   npm run dev
-   ```
-
-### production
-
-To build and serve the application for production:
-```bash
-npm run build
-npm start
-```
-
-The server defaults to port 3001 unless otherwise specified in the environment variables.
-
-## security architecture
-
-This server is strictly a signaling agent. It does not process, store, or have access to the contents of the files being transferred. All file data is encrypted and transferred directly between peers via WebRTC, ensuring a private and secure user experience.
+This server is strictly a signaling agent and does not process, store, or have access to the contents of the files being transferred. All file data is streamed directly between peers via WebRTC, ensuring maximum privacy and data integrity. The signaling server is purely responsible for the initial "handshake" and coordinating device discovery.
