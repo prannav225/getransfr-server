@@ -8,6 +8,8 @@ The Getransfr Server is a high-performance Node.js signaling hub that facilitate
 - **WebRTC Signaling**: Relays crucial connection metadata, including SDP offers, answers, and ICE candidates, to establish direct peer-to-peer data channels.
 - **Lifecycle Management**: Real-time tracking of device connectivity with automatic list updates and a grace period for transient disconnections.
 - **Identification and Naming**: Assigns unique persistent identifiers and generates human-readable random names for all connected devices.
+- **Health Monitoring**: Provides a dedicated `/health` endpoint for real-time status telemetry and active device counts.
+- **Memory Safety**: Enforces strict buffer limits (10MB) on signaling relays to prevent resource fatigue.
 
 ## Technical Architecture
 
