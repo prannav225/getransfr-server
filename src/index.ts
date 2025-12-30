@@ -16,8 +16,13 @@ const io = new Server(httpServer, {
     allowedHeaders: ["*"],
     credentials: true
   },
-  maxHttpBufferSize: 1e8, // Reduce to 100MB since we're using P2P for files
+  maxHttpBufferSize: 1e7, // 10MB - Plenty for P2P signaling and clipboard, safer against memory exhaustion
   transports: ['websocket', 'polling']
+});
+
+// Health check route for monitoring
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', devices: connectedDevices.size });
 });
 
 interface Device {
@@ -145,9 +150,21 @@ io.on('connection', (socket) => {
     console.log(`Relaying clipboard-share from ${socket.id} to ${to}`);
     io.to(to).emit('clipboard-receive', { from: socket.id, text });
   });
+
+  // Ping/Pong for active health monitoring
+  socket.on('ping', () => socket.emit('pong'));
 });
+
+// Proactive Pruning: Every 15 seconds, check for stale connections
+setInterval(() => {
+    const now = Date.now();
+    // In a real production app, we'd check lastSeen timestamps here.
+    // For this P2P server, Socket.io's internal heartbeats usually suffice,
+    // but we can add an explicit cleanup if we track last activity.
+}, 15000);
 
 const PORT = process.env.PORT || 5001;
 httpServer.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`[Getransfr] Server ready on :${PORT}`);
+  console.log(`[Getransfr] Max Relay Buffer: 10MB`);
 });
