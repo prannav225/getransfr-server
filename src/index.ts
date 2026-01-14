@@ -41,7 +41,12 @@ function broadcastDeviceList() {
 }
 
 io.on("connection", (socket) => {
-  const ip = socket.handshake.address.replace("::ffff:", "");
+  const xForwardedFor = socket.handshake.headers["x-forwarded-for"];
+  const ip = (
+    typeof xForwardedFor === "string"
+      ? xForwardedFor.split(",")[0]
+      : socket.handshake.address
+  ).replace("::ffff:", "");
   console.log("New connection:", socket.id, "from IP:", ip);
 
   const clientId = socket.handshake.query.clientId as string;
