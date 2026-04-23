@@ -112,10 +112,11 @@ io.on("connection", (socket) => {
     const deviceList = Array.from(connectedDevices.values());
     socket.emit("connectedDevices", deviceList);
   });
-
   // Handle device disconnection
   socket.on("disconnect", () => {
     console.log("Device disconnected:", device?.name, device?.id);
+    if (!device) return;
+
     // Don't immediately remove the device, give it a chance to reconnect
     setTimeout(() => {
       const currentDevice = connectedDevices.get(device.id);
