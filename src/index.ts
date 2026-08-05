@@ -91,8 +91,23 @@ io.on("connection", (socket) => {
         io.emit("deviceDisconnected", device.id);
       }
       existingDevice.socketId = socket.id;
+      if (clientName && clientName !== "undefined") {
+        existingDevice.name = clientName;
+      }
       device = existingDevice;
       connectedDevices.set(deviceId, existingDevice);
+      socket.emit("deviceInfo", existingDevice);
+      broadcastDeviceList();
+    }
+  });
+
+  // Handle explicit profile update
+  socket.on("updateDevice", (data: { deviceId: string; name?: string; avatar?: string }) => {
+    if (data?.deviceId && connectedDevices.has(data.deviceId)) {
+      const existingDevice = connectedDevices.get(data.deviceId)!;
+      if (data.name) existingDevice.name = data.name;
+      if (data.avatar) (existingDevice as any).avatar = data.avatar;
+      connectedDevices.set(data.deviceId, existingDevice);
       socket.emit("deviceInfo", existingDevice);
       broadcastDeviceList();
     }
