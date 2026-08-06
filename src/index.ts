@@ -129,18 +129,16 @@ io.on("connection", (socket) => {
   });
   // Handle device disconnection
   socket.on("disconnect", () => {
-    console.log("Device disconnected:", device?.name, device?.id);
+    console.log("Device disconnected:", device?.name, device?.id, socket.id);
     if (!device) return;
 
-    // Don't immediately remove the device, give it a chance to reconnect
-    setTimeout(() => {
-      const currentDevice = connectedDevices.get(device.id);
-      if (currentDevice && currentDevice.socketId === socket.id) {
-        connectedDevices.delete(device.id);
-        broadcastDeviceList();
-        io.emit("deviceDisconnected", device.id);
-      }
-    }, 5000); // 5 second grace period for reconnection
+    // If this socket was still the active socket for the device, remove it immediately
+    const currentDevice = connectedDevices.get(device.id);
+    if (currentDevice && currentDevice.socketId === socket.id) {
+      connectedDevices.delete(device.id);
+      broadcastDeviceList();
+      io.emit("deviceDisconnected", device.id);
+    }
   });
 
   // Handle explicit device disconnection
