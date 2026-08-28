@@ -30,6 +30,8 @@ interface Device {
   name: string;
   socketId: string;
   ip?: string;
+  localIps?: string[];
+  localPort?: number;
 }
 
 const connectedDevices = new Map<string, Device>();
@@ -102,11 +104,13 @@ io.on("connection", (socket) => {
   });
 
   // Handle explicit profile update
-  socket.on("updateDevice", (data: { deviceId: string; name?: string; avatar?: string }) => {
+  socket.on("updateDevice", (data: { deviceId: string; name?: string; avatar?: string; localIps?: string[]; localPort?: number }) => {
     if (data?.deviceId && connectedDevices.has(data.deviceId)) {
       const existingDevice = connectedDevices.get(data.deviceId)!;
       if (data.name) existingDevice.name = data.name;
       if (data.avatar) (existingDevice as any).avatar = data.avatar;
+      if (data.localIps) existingDevice.localIps = data.localIps;
+      if (data.localPort) existingDevice.localPort = data.localPort;
       connectedDevices.set(data.deviceId, existingDevice);
       socket.emit("deviceInfo", existingDevice);
       broadcastDeviceList();
